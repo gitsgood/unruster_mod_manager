@@ -4,12 +4,19 @@ use unruster_mod_manager::{UnrusterState};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     //let current_file_path = get_mod_path().expect("Dialogue was useless you dolt");
+    let data_dir = dirs::data_dir()
+    .ok_or("Couldn't determine data directory")?;
+
+    println!("{:?}", data_dir);
+
+    /*
     std::fs::create_dir(unruster_mod_manager::DOWNLOAD_TARGET_TEST)?;
 
     let state = UnrusterState::new()?;
     for modid in &state.current_profile.mods {
         state.download_mod(&modid.modid, Some(semver::Version::from_str(&modid.version)?))?;
     }
+    */
     /*
     let current_file_directory = get_mod_directory().expect("Dialogue was useless, AGAIN");
 

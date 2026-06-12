@@ -39,3 +39,9 @@ pub struct UnrusterProfile {
     pub profile_name: String,
     pub mods: Vec<UnrusterModInfo>
 }
+
+/// Might eventually put useful info in there.
+#[derive(Deserialize, Serialize, Debug)]
+pub struct UnrusterConfig {
+    pub mod_folder_path: String,
+}
