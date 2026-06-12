@@ -35,12 +35,16 @@ pub fn create_default_profile() -> Result<UnrusterProfile, Box<dyn std::error::E
 
 pub fn create_default_settings() -> Result<UnrusterConfig, Box<dyn std::error::Error>> {
     println!("Config directory is empty, setting up configuration...");
-    let mut default_config = UnrusterConfig {
-        mod_folder_path: String::from(dirs::data_dir()
-            .ok_or("Couldn't find the data directory")?
-            .join(VINTAGE_STORY_MODS_PATH).to_str()
-            .ok_or("Couldn't build the path")?)
-        };
+    let default_config = match dirs::data_dir() {
+        Some(data_dir) => data_dir
+            .join(VINTAGE_STORY_MODS_PATH)
+            .to_string_lossy()
+            .into_owned(),
+        
+        None => get_mod_directory()?.to_str().ok_or("Couldn't convert path into slice.")?.to_string()
+    };
+
+    Ok(UnrusterConfig { mod_folder_path: default_config.to_string() })
 }
 
 pub fn get_mod_directory() -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -48,7 +52,7 @@ pub fn get_mod_directory() -> Result<PathBuf, Box<dyn std::error::Error>> {
     .set_title("Locate your mod directory in VintageDataStory")
     .open_single_dir()
     .show()?
-    .unwrap();
+    .ok_or("You went and cancelled folder selection smartass")?;
 
     Ok(path)
 }

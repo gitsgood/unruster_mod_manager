@@ -15,7 +15,7 @@ pub use helpers::*;
 pub struct UnrusterState {
     api_client: reqwest::blocking::Client,
     pub current_profile: UnrusterProfile,
-    config: UnrusterConfig
+    current_config: UnrusterConfig
 }
 
 impl UnrusterState {
@@ -24,7 +24,7 @@ impl UnrusterState {
             .user_agent("UnrusterModManager/0.1.0")
             .build()?;
 
-        let current_profile: UnrusterProfile = match check_directory_contents(CURRENT_PROFILE_PATH)? {
+        let profile: UnrusterProfile = match check_directory_contents(CURRENT_PROFILE_PATH)? {
             (None, _) => {
                 create_default_profile()?
             }
@@ -46,27 +46,25 @@ impl UnrusterState {
 
         let config: UnrusterConfig = match check_directory_contents(CONFIG_FILE_PATH)? {
             (None, _) => {
-                create_default_profile()?
+                create_default_settings()?
             }
             (Some(first), None) => {
                 let path = first.path();
-                let profile_string = std::fs::read_to_string(path)?;
-                let current_profile: UnrusterProfile = serde_json::from_str(&profile_string)?;
+                let config_string = std::fs::read_to_string(path)?;
+                let current_config: UnrusterConfig = serde_json::from_str(&config_string)?;
 
-                println!("Current profile has the following mods:\n");
-                for mods in &current_profile.mods {
-                    println!("{}", mods.modid);
-                }
-                current_profile
+                println!("Current config has the following path: {}", &current_config.mod_folder_path);
+                current_config
             }
             _ => {
-                return Err(format!("Current profile directory contains more than 1 files, expected exactly 1").into());
+                return Err(format!("Current config directory contains more than 1 files, expected exactly 1").into());
             }
         };
 
         Ok(UnrusterState { 
             api_client: client, 
-            current_profile: current_profile 
+            current_profile: profile,
+            current_config: config
         })
     }
 
