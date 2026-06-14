@@ -1,8 +1,8 @@
 //use std::str::FromStr;
 
-use unruster_mod_manager::{UnrusterState};
+use unruster_mod_manager::{UnrusterState, UResult};
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> UResult<()> {
     //let current_file_path = get_mod_path().expect("Dialogue was useless you dolt");
     let data_dir = dirs::data_dir()
     .ok_or("Couldn't determine data directory")?;
@@ -11,7 +11,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let _state = UnrusterState::new()?;
 
-    _state.sync_mods_to_profile()?;
+    let updatable = _state.compare_all_mod_versions()?;
+
+    for modid in updatable {
+        modid.0.print_update_situation(&modid.1);
+    }
+
+    //_state.sync_mods_to_profile()?;
 
     /*
     std::fs::create_dir(unruster_mod_manager::DOWNLOAD_TARGET_TEST)?;

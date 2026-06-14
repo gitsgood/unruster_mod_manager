@@ -25,7 +25,7 @@ pub struct VSApiResponse {
 
 /// Represent what we care about here, being version and modid. 
 /// We can then make our own jsons keeping track of what we need later for profiles and whatnot based on this
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct UnrusterModInfo {
     #[serde(alias = "ModID", alias = "modID", alias = "modId")]
     pub modid: String,

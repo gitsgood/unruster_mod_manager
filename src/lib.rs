@@ -1,14 +1,18 @@
 use std::{cmp::Ordering, fs::File, path::PathBuf, str::FromStr};
 use semver::Version;
-use colored::Colorize;
+use rayon::prelude::*;
 
 pub mod json_structs;
 pub mod constants_for_posterity;
 pub mod helpers;
+pub mod enums;
 
 pub use json_structs::*;
 pub use constants_for_posterity::*;
 pub use helpers::*;
+pub use enums::*;
+
+pub type UResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[allow(unused)]
 pub struct UnrusterState {
@@ -19,7 +23,7 @@ pub struct UnrusterState {
 }
 
 impl UnrusterState {
-    pub fn new() -> Result<UnrusterState, Box<dyn std::error::Error>> {
+    pub fn new() -> UResult<UnrusterState> {
         let client = reqwest::blocking::Client::builder()
             .user_agent("UnrusterModManager/0.1.0")
             .build()?;
@@ -72,7 +76,7 @@ impl UnrusterState {
         })
     }
 
-    pub fn download_mod(&self, modid: &str, version: Option<Version>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn download_mod(&self, modid: &str, version: Option<Version>) -> UResult<()> {
         let api_url = format!("{}{}", VINTAGE_STORY_API_PREFIX, modid);
 
         let response: VSApiResponse = self.api_client.get(api_url).send()?.json()?;
@@ -85,8 +89,8 @@ impl UnrusterState {
         let release = response
             .mod_data
             .releases
-            .iter()
-            .find(|r| {
+            .par_iter()
+            .find_any(|r| {
                 if let Ok(v) = Version::from_str(&r.modversion) {
                     v == version_to_download
                 } else {
@@ -104,7 +108,7 @@ impl UnrusterState {
         Ok(())
     }
 
-    fn check_latest(&self, modid: &str) -> Result<Version, Box<dyn std::error::Error>> {
+    fn check_latest(&self, modid: &str) -> UResult<Version> {
         let api_url = format!("{}{}", VINTAGE_STORY_API_PREFIX, modid);
 
         let response: VSApiResponse = self.api_client.get(api_url).send()?.json()?;
@@ -123,34 +127,53 @@ impl UnrusterState {
                 latest_version = this_version;
             }
         }
-        println!("{}", latest_version.to_string().yellow().on_red());
+        //println!("{}", latest_version.to_string().yellow().on_red());
         Ok(latest_version)
     }
 
-    pub fn compare_mod_version<P: AsRef<std::path::Path>>(&self, file: P) -> Result<bool, Box<dyn std::error::Error>> {
-        let mod_info: UnrusterModInfo = get_modinfo_from_zip(file.as_ref())?;
-        println!("Version of installed mod is: {}", mod_info.version);
+    pub fn compare_all_mod_versions(&self) -> UResult<std::collections::HashSet<(ModUpdateState, String)>> {
+        let path = std::path::Path::new(&self.current_config.mod_folder_path);
+        let directory: Vec<_> = std::fs::read_dir(path)?            
+            .filter_map(Result::ok)
+            .filter(|e| e.path().extension().map_or(false, |ext| ext == "zip"))
+            .collect();
+
+        let updatables: std::collections::HashSet<(ModUpdateState, String)> = directory
+            .par_iter()
+            .map(|entry| {
+                let entry_info = get_modinfo_from_zip(entry.path())?;
+                let update_state = self.compare_mod_version(CompareInput::ModInfo(entry_info.clone()))?;
+                Ok((update_state, entry_info.modid))
+            })
+            .collect::<UResult<std::collections::HashSet<(ModUpdateState, String)>>>()?;
+
+        Ok(updatables)
+    }
+
+    pub fn compare_mod_version(&self, file: CompareInput) -> UResult<ModUpdateState> {
+        let mod_info: UnrusterModInfo = match file {
+            CompareInput::Path(path) => get_modinfo_from_zip(path)?,
+            CompareInput::ModInfo(this) => this
+        };
+        //println!("Version of installed mod is: {}", mod_info.version);
 
         let current = Version::parse(&mod_info.version)?;
         let latest = &self.check_latest(&mod_info.modid)?;
 
         match current.cmp(&latest) {
             Ordering::Greater => {
-                println!("{}{}{}", "Current ".red().on_yellow(), mod_info.modid.red().on_yellow(), " version is newer than the newest available ,':/".red().on_yellow());
-                return Ok(false)
+                return Ok(ModUpdateState::NewerThanNew)
             }
             Ordering::Equal => {
-                println!("{} is up to date :)", mod_info.modid);
-                return Ok(false)
+                return Ok(ModUpdateState::UpToDate)
             }
             Ordering::Less => {
-                println!("{}{}", mod_info.modid.green().on_bright_white(), " has an update available!".green().on_bright_white());
-                return Ok(true)
+                return Ok(ModUpdateState::OutOfDate)
             }
         }
     }
 
-    pub fn sync_mods_to_profile(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn sync_mods_to_profile(&self) -> UResult<()> {
         if self.verify_profile_to_mods_sync()? {
             println!("Mods are already fully in sync with profile!");
             return Ok(());
@@ -168,7 +191,7 @@ impl UnrusterState {
         Ok(())
     }
 
-    fn verify_profile_to_mods_sync(&self) -> Result<bool, Box<dyn std::error::Error>> {
+    fn verify_profile_to_mods_sync(&self) -> UResult<bool> {
         if let DirectoryState::Empty = check_directory_contents(DOWNLOAD_TARGET_TEST, "zip")? {
             return Ok(false);
         }
@@ -183,7 +206,7 @@ impl UnrusterState {
         }
 
         let profile_set: std::collections::HashSet<(String, String)> = self.current_profile.mods
-            .iter()
+            .par_iter()
             .map(|m| (m.modid.clone(), m.version.clone()))
             .collect();
 

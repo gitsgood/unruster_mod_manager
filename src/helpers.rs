@@ -1,5 +1,4 @@
-use crate::json_structs::*;
-use crate::constants_for_posterity::*;
+use crate::{json_structs::*, constants_for_posterity::*, UResult, enums::{DirectoryState}};
 
 use serde::{Serialize};
 use std::path::PathBuf;
@@ -7,7 +6,7 @@ use native_dialog::{DialogBuilder};
 use zip::ZipArchive;
 use std::{io::Read};
 
-pub fn create_default_profile<P: AsRef<std::path::Path>>(path: P) -> Result<UnrusterProfile, Box<dyn std::error::Error>> {
+pub fn create_default_profile<P: AsRef<std::path::Path>>(path: P) -> UResult<UnrusterProfile> {
     println!("Current profile directory is empty, current profile shall be of your current mods.");
     let mut default_profile = UnrusterProfile {profile_name: "Default".to_string(), game_version: get_game_version()?, mods: vec![]};
 
@@ -26,7 +25,7 @@ pub fn create_default_profile<P: AsRef<std::path::Path>>(path: P) -> Result<Unru
     Ok(default_profile)
 }
 
-pub fn create_default_settings() -> Result<UnrusterConfig, Box<dyn std::error::Error>> {
+pub fn create_default_settings() -> UResult<UnrusterConfig> {
     println!("Config directory is empty, setting up configuration...");
     let mods_path = match dirs::data_dir() {
         Some(data_dir) => data_dir
@@ -44,7 +43,7 @@ pub fn create_default_settings() -> Result<UnrusterConfig, Box<dyn std::error::E
     Ok(config)
 }
 
-pub fn get_game_version() -> Result<String, Box<dyn std::error::Error>> {
+pub fn get_game_version() -> UResult<String> {
     let logs_path = match dirs::data_dir() {
         Some(data_dir) => data_dir
             .join(VINTAGE_STORY_LOGS_PATH).join(VINTAGE_STORY_CLIENT_MAIN)
@@ -71,7 +70,7 @@ pub fn get_game_version() -> Result<String, Box<dyn std::error::Error>> {
     Ok(version.to_string())
 }
 
-pub fn get_mod_directory() -> Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn get_mod_directory() -> UResult<PathBuf> {
     let path = DialogBuilder::file()
     .set_location(&dirs::data_dir().ok_or("Data directory not found")?.join(VINTAGE_STORY_MODS_PATH))
     .set_title("Confirm your mod directory location")
@@ -82,7 +81,7 @@ pub fn get_mod_directory() -> Result<PathBuf, Box<dyn std::error::Error>> {
     Ok(path)
 }
 
-pub fn get_log_path() -> Result<PathBuf, Box<dyn std::error::Error>> {
+pub fn get_log_path() -> UResult<PathBuf> {
     let path = DialogBuilder::file()
     .set_location(&dirs::data_dir().ok_or("Data directory not found")?.join(VINTAGE_STORY_LOGS_PATH))
     .add_filter("Text file", ["txt"])
@@ -93,13 +92,7 @@ pub fn get_log_path() -> Result<PathBuf, Box<dyn std::error::Error>> {
     Ok(path)
 }
 
-pub enum DirectoryState {
-    Empty,
-    Single(std::fs::DirEntry),
-    Multiple,
-}
-
-pub fn check_directory_contents<P: AsRef<std::path::Path>>(path: P, check_for: &str) -> Result<DirectoryState, Box<dyn std::error::Error>> {
+pub fn check_directory_contents<P: AsRef<std::path::Path>>(path: P, check_for: &str) -> UResult<DirectoryState> {
     let directory = path.as_ref();
 
     if !directory.exists() {
@@ -122,7 +115,7 @@ pub fn check_directory_contents<P: AsRef<std::path::Path>>(path: P, check_for: &
     }
 }
 
-pub fn get_modinfo_from_zip<P: AsRef<std::path::Path>>(path: P) -> Result<UnrusterModInfo, Box<dyn std::error::Error>> {
+pub fn get_modinfo_from_zip<P: AsRef<std::path::Path>>(path: P) -> UResult<UnrusterModInfo> {
     let file = std::fs::File::open(path.as_ref())?;
     let mut archive = ZipArchive::new(file)?;
     let mut zipped_mod_info = archive.by_name("modinfo.json")?;
@@ -134,14 +127,14 @@ pub fn get_modinfo_from_zip<P: AsRef<std::path::Path>>(path: P) -> Result<Unrust
     Ok(mod_info)
 }
 
-pub fn empty_directory<P: AsRef<std::path::Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
+pub fn empty_directory<P: AsRef<std::path::Path>>(path: P) -> UResult<()> {
     let _ = std::fs::remove_dir_all(path.as_ref()); 
     std::fs::create_dir_all(path.as_ref())?;
 
     Ok(())
 }
 
-pub fn write_json<S: Serialize, P: AsRef<std::path::Path>>(target: &S, path: P) -> Result<(), Box<dyn std::error::Error>> {
+pub fn write_json<S: Serialize, P: AsRef<std::path::Path>>(target: &S, path: P) -> UResult<()> {
     let file = std::fs::File::create(path.as_ref())?;
     serde_json::to_writer_pretty(file, target)?;
     Ok(())
