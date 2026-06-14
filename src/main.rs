@@ -1,4 +1,4 @@
-use std::str::FromStr;
+//use std::str::FromStr;
 
 use unruster_mod_manager::{UnrusterState};
 
@@ -9,10 +9,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("{:?}", data_dir);
 
+    let _state = UnrusterState::new()?;
+
+    _state.sync_mods_to_profile()?;
+
     /*
     std::fs::create_dir(unruster_mod_manager::DOWNLOAD_TARGET_TEST)?;
 
-    let state = UnrusterState::new()?;
     for modid in &state.current_profile.mods {
         state.download_mod(&modid.modid, Some(semver::Version::from_str(&modid.version)?))?;
     }

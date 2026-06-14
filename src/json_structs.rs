@@ -37,6 +37,7 @@ pub struct UnrusterModInfo {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct UnrusterProfile {
     pub profile_name: String,
+    pub game_version: String,
     pub mods: Vec<UnrusterModInfo>
 }
 

@@ -1,41 +1,34 @@
 use crate::json_structs::*;
 use crate::constants_for_posterity::*;
 
+use serde::{Serialize};
 use std::path::PathBuf;
 use native_dialog::{DialogBuilder};
 use zip::ZipArchive;
 use std::{io::Read};
 
-pub fn create_default_profile() -> Result<UnrusterProfile, Box<dyn std::error::Error>> {
+pub fn create_default_profile<P: AsRef<std::path::Path>>(path: P) -> Result<UnrusterProfile, Box<dyn std::error::Error>> {
     println!("Current profile directory is empty, current profile shall be of your current mods.");
-    let mut default_profile = UnrusterProfile {profile_name: "Default".to_string(), mods: vec![]};
+    let mut default_profile = UnrusterProfile {profile_name: "Default".to_string(), game_version: get_game_version()?, mods: vec![]};
 
-    for file in std::fs::read_dir(get_mod_directory()?)? {
+    for file in std::fs::read_dir(path.as_ref())? {
         let entry= file?;
         let path = entry.path();
 
         if path.extension().and_then(|e| e.to_str()) == Some("zip") {
-            let file = std::fs::File::open(path)?;
-            let mut archive = ZipArchive::new(file)?;
-            let mut zipped_mod_info = archive.by_name("modinfo.json")?;
-            let mut modinfo_json = String::new();
-            zipped_mod_info.read_to_string(&mut modinfo_json)?;
-
-            let mod_info: UnrusterModInfo = json5::from_str(&modinfo_json)?;
+            let mod_info: UnrusterModInfo = get_modinfo_from_zip(&path)?;
             default_profile.mods.push(mod_info);
         }
     }
-    let profile_path = PathBuf::from(CURRENT_PROFILE_PATH).join("default_profile.json");
-
-    let json = serde_json::to_string_pretty(&default_profile)?;
-    std::fs::write(profile_path, json)?;
+    let profile_path = std::path::Path::new(CURRENT_PROFILE_PATH).join("default_profile.json");
+    write_json(&default_profile, &profile_path)?;
 
     Ok(default_profile)
 }
 
 pub fn create_default_settings() -> Result<UnrusterConfig, Box<dyn std::error::Error>> {
     println!("Config directory is empty, setting up configuration...");
-    let default_config = match dirs::data_dir() {
+    let mods_path = match dirs::data_dir() {
         Some(data_dir) => data_dir
             .join(VINTAGE_STORY_MODS_PATH)
             .to_string_lossy()
@@ -44,12 +37,44 @@ pub fn create_default_settings() -> Result<UnrusterConfig, Box<dyn std::error::E
         None => get_mod_directory()?.to_str().ok_or("Couldn't convert path into slice.")?.to_string()
     };
 
-    Ok(UnrusterConfig { mod_folder_path: default_config.to_string() })
+    let config = UnrusterConfig { mod_folder_path: mods_path.to_string()};
+    let config_path = std::path::Path::new(CONFIG_FILE_PATH).join("default_config.json");
+    write_json(&config, &config_path)?;
+
+    Ok(config)
+}
+
+pub fn get_game_version() -> Result<String, Box<dyn std::error::Error>> {
+    let logs_path = match dirs::data_dir() {
+        Some(data_dir) => data_dir
+            .join(VINTAGE_STORY_LOGS_PATH).join(VINTAGE_STORY_CLIENT_MAIN)
+            .to_string_lossy()
+            .into_owned(),
+        
+        None => get_log_path()?.to_str().ok_or("Couldn't convert path into slice.")?.to_string()
+    };
+
+    let log = std::fs::read_to_string(logs_path)?;
+
+    let version = log
+        .lines()
+        .find_map(|line| {
+            line.split_once("Game Version: ")
+                .map(|(_, version)| version)
+        })
+        .and_then(|v| v.split_whitespace().next())
+        .and_then(|v| v.strip_prefix('v'))
+        .ok_or("Couldn't parse version from logs.")?;
+
+    println!("Game version: {:?}", version);
+
+    Ok(version.to_string())
 }
 
 pub fn get_mod_directory() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let path = DialogBuilder::file()
-    .set_title("Locate your mod directory in VintageDataStory")
+    .set_location(&dirs::data_dir().ok_or("Data directory not found")?.join(VINTAGE_STORY_MODS_PATH))
+    .set_title("Confirm your mod directory location")
     .open_single_dir()
     .show()?
     .ok_or("You went and cancelled folder selection smartass")?;
@@ -57,21 +82,67 @@ pub fn get_mod_directory() -> Result<PathBuf, Box<dyn std::error::Error>> {
     Ok(path)
 }
 
-pub fn check_directory_contents(path: &str) -> Result<(std::option::Option<std::fs::DirEntry>, std::option::Option<std::fs::DirEntry>), Box<dyn std::error::Error>> {
-    let directory = PathBuf::from(path);
+pub fn get_log_path() -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let path = DialogBuilder::file()
+    .set_location(&dirs::data_dir().ok_or("Data directory not found")?.join(VINTAGE_STORY_LOGS_PATH))
+    .add_filter("Text file", ["txt"])
+    .open_single_file()
+    .show()?
+    .ok_or("You went and cancelled folder selection smartass")?;
+
+    Ok(path)
+}
+
+pub enum DirectoryState {
+    Empty,
+    Single(std::fs::DirEntry),
+    Multiple,
+}
+
+pub fn check_directory_contents<P: AsRef<std::path::Path>>(path: P, check_for: &str) -> Result<DirectoryState, Box<dyn std::error::Error>> {
+    let directory = path.as_ref();
 
     if !directory.exists() {
-        println!("{} does not exist, creating it.", &path);
-        std::fs::create_dir_all(path)?;
+        println!("{:?} does not exist, creating it.", directory);
+        std::fs::create_dir_all(directory)?;
     }
 
-    let mut files_in_dir= std::fs::read_dir(&directory)?
+    let mut files_in_dir= std::fs::read_dir(directory)?
         .filter_map(Result::ok)
         .filter(|e| {
             e.path()
                 .extension()
-                .and_then(|e| e.to_str()) == Some("json")
+                .and_then(|e| e.to_str()) == Some(check_for)
         });
     
-    Ok((files_in_dir.next(), files_in_dir.next()))
+    match (files_in_dir.next(), files_in_dir.next()) {
+        (None, _) => Ok(DirectoryState::Empty),
+        (Some(first), None) => Ok(DirectoryState::Single(first)),
+        (Some(_), Some(_)) => Ok(DirectoryState::Multiple),
+    }
+}
+
+pub fn get_modinfo_from_zip<P: AsRef<std::path::Path>>(path: P) -> Result<UnrusterModInfo, Box<dyn std::error::Error>> {
+    let file = std::fs::File::open(path.as_ref())?;
+    let mut archive = ZipArchive::new(file)?;
+    let mut zipped_mod_info = archive.by_name("modinfo.json")?;
+    let mut modinfo_json = String::new();
+    zipped_mod_info.read_to_string(&mut modinfo_json)?;
+
+    let mod_info: UnrusterModInfo = json5::from_str(&modinfo_json)?;
+
+    Ok(mod_info)
+}
+
+pub fn empty_directory<P: AsRef<std::path::Path>>(path: P) -> Result<(), Box<dyn std::error::Error>> {
+    let _ = std::fs::remove_dir_all(path.as_ref()); 
+    std::fs::create_dir_all(path.as_ref())?;
+
+    Ok(())
+}
+
+pub fn write_json<S: Serialize, P: AsRef<std::path::Path>>(target: &S, path: P) -> Result<(), Box<dyn std::error::Error>> {
+    let file = std::fs::File::create(path.as_ref())?;
+    serde_json::to_writer_pretty(file, target)?;
+    Ok(())
 }
