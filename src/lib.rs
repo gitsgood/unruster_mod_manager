@@ -89,8 +89,8 @@ impl UnrusterState {
         let release = response
             .mod_data
             .releases
-            .par_iter()
-            .find_any(|r| {
+            .iter()
+            .find(|r| {
                 if let Ok(v) = Version::from_str(&r.modversion) {
                     v == version_to_download
                 } else {
