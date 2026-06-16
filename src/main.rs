@@ -95,7 +95,7 @@ fn main() -> UResult<()> {
                         println!("Switching profiles...");
                         state.switch_current_profile(&inputed_name)?;
                         println!("Profile succesfully switched, syncing mods folder to new blank slate profile...");
-                        state.sync_profile_to_mods()?;
+                        state.sync_mods_to_profile()?;
                         println!("Mods folder cleared! You're now ready to design your brand new modlist :)");
                     }
                     _ => {

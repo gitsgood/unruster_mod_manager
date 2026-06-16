@@ -16,6 +16,16 @@ pub fn create_default_profile<P: AsRef<std::path::Path>>(mods_folder_path: P) ->
 
         if path.extension().and_then(|e| e.to_str()) == Some("zip") {
             let mod_info: UnrusterModInfo = get_modinfo_from_zip(&path)?;
+            if mod_info.is_locked == true {
+                if !std::path::Path::new(CACHED_MODS_PATH).exists() {
+                    std::fs::create_dir_all(CACHED_MODS_PATH)?;
+                }
+                let new_path = std::path::Path::new(CACHED_MODS_PATH).join(path.file_name().ok_or("Couldn't get filename")?);
+
+                if !new_path.exists() {
+                    std::fs::copy(path, new_path)?;
+                }
+            }
             default_profile.mods.push(mod_info);
         }
     }
@@ -144,6 +154,10 @@ pub fn find_profile_by_name(name: &str) -> UResult<UnrusterProfile> {
 }
 
 pub fn find_cached_mod(modid: &str) -> UResult<std::path::PathBuf> {
+    if !std::path::Path::new(CACHED_MODS_PATH).exists() {
+        std::fs::create_dir_all(CACHED_MODS_PATH)?;
+    }
+
     let entries = std::fs::read_dir(CACHED_MODS_PATH)?
         .filter_map(Result::ok)
         .filter(|e| {

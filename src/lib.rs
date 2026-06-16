@@ -196,32 +196,34 @@ impl UnrusterState {
             return Ok(());
         }
 
-        match check_directory_contents(&self.current_config.mod_folder_path, "zip")? {
-            DirectoryState::Empty => {
-                println!("Mods folder already empty, doing nothing...");
-            }
-            DirectoryState::Single(file) => {
-                let mod_info = get_modinfo_from_zip(file.path())?;
-                if mod_info.is_locked {
-                    let new_path = std::path::Path::new(CACHED_MODS_PATH).join(file.file_name());
-                    std::fs::copy(file.path(), new_path)?;
+        std::fs::create_dir_all(CACHED_MODS_PATH)?;
+
+        let entries = std::fs::read_dir(&self.current_config.mod_folder_path)?
+            .filter_map(Result::ok)
+            .filter(|e| e.path().extension().map_or(false, |ext| ext == "zip"));
+
+        for entry in entries {
+            let path = entry.path();
+
+            let mod_info = get_modinfo_from_zip(&path)?;
+
+            let is_locked = self.current_profile.mods
+                .iter()
+                .find(|m| m.modid == mod_info.modid)
+                .map(|m| m.is_locked)
+                .unwrap_or(false);
+
+            if is_locked {
+                let file_name = path.file_name().ok_or("Invalid filename")?;
+                let cache_path = std::path::Path::new(CACHED_MODS_PATH).join(file_name);
+
+                if !cache_path.exists() {
+                    std::fs::copy(&path, cache_path)?;
+                    println!("Backed up locked mod: {}", mod_info.modid);
                 }
-                else {
-                    empty_directory(&self.current_config.mod_folder_path)?;
-                }
-            }
-            DirectoryState::Multiple(folder) => {
-                let entries = folder.filter_map(Result::ok);
-                for entry in entries {
-                    let mod_info = get_modinfo_from_zip(entry.path())?;
-                    if mod_info.is_locked {
-                        let new_path = std::path::Path::new(CACHED_MODS_PATH).join(entry.file_name());
-                        std::fs::copy(entry.path(), new_path)?;
-                    }
-                    else {
-                        std::fs::remove_file(entry.path())?;
-                    }
-                }
+            } 
+            else {
+                std::fs::remove_file(path)?;
             }
         }
 
@@ -230,9 +232,14 @@ impl UnrusterState {
                 self.download_mod(&modid.modid, Some(semver::Version::from_str(&modid.version)?))?
             }
             else {
-                let cached_mod = find_cached_mod(&modid.modid)?;
-                let new_path = std::path::Path::new(&self.current_config.mod_folder_path).join(cached_mod.file_name().unwrap());
-                std::fs::copy(cached_mod, new_path)?;
+                let mod_name = format!("{}.zip", modid.name);
+                let current_path = std::path::Path::new(&self.current_config.mod_folder_path).join(&mod_name);
+
+                if !current_path.exists() {
+                    let cached_mod = find_cached_mod(&modid.modid)?;
+                    let new_path = std::path::Path::new(&self.current_config.mod_folder_path).join(cached_mod.file_name().unwrap());
+                    std::fs::copy(cached_mod, new_path)?;
+                }
             }
         }
 
@@ -290,11 +297,11 @@ impl UnrusterState {
         }
 
         loop {
-            println!("\n--- Select a Profile ---");
+            //println!("\n--- Select a Profile ---");
             for (i, name) in available_profiles.iter().enumerate() {
-                println!("{}. {}", i + 1, name);
+                println!("{}: {}", i + 1, name);
             }
-            println!("q. Cancel");
+            println!("Else: Cancel");
             print!("Enter number: ");
             std::io::stdout().flush()?;
 
@@ -302,10 +309,10 @@ impl UnrusterState {
             std::io::stdin().read_line(&mut input)?;
             let input = input.trim();
 
-            if input == "q" {
+            /*if input == "q" {
                 println!("Switch cancelled.");
                 return Ok(());
-            }
+            }*/
 
             match input.parse::<usize>() {
                 Ok(num) if num > 0 && num <= available_profiles.len() => {
@@ -315,7 +322,8 @@ impl UnrusterState {
                     return Ok(());
                 }
                 _ => {
-                    println!("Invalid selection. Please enter a number between 1 and {}.", available_profiles.len());
+                    println!("Switch cancelled.");
+                    return Ok(());
                 }
             }
         }
