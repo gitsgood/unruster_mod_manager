@@ -14,7 +14,6 @@ pub use enums::*;
 
 pub type UResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
-#[allow(unused)]
 pub struct UnrusterState {
     api_client: reqwest::blocking::Client,
     current_profile: UnrusterProfile,
@@ -134,6 +133,9 @@ impl UnrusterState {
         self.current_profile = new_profile;
 
         println!("Switched to profile: {}", profile_name);
+        if self.current_game_version != Version::parse(&self.current_profile.game_version)? {
+            println!("Profile expected game version: {}\nBut current game version is: {}", &self.current_profile.game_version, &self.current_game_version)
+        }
         Ok(())
     }
 

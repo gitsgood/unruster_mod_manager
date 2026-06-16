@@ -6,16 +6,16 @@ use native_dialog::{DialogBuilder};
 use zip::ZipArchive;
 use std::{io::Read};
 
-pub fn create_default_profile<P: AsRef<std::path::Path>>(path: P) -> UResult<UnrusterProfile> {
+pub fn create_default_profile<P: AsRef<std::path::Path>>(mods_folder_path: P) -> UResult<UnrusterProfile> {
     println!("Current profile directory is empty, current profile shall be of your current mods.");
     let mut default_profile = UnrusterProfile {profile_name: DEFAULT_PROFILE_NAME.to_string(), game_version: get_game_version()?, mods: vec![]};
 
-    for file in std::fs::read_dir(path.as_ref())? {
+    for file in std::fs::read_dir(mods_folder_path.as_ref())? {
         let entry= file?;
         let path = entry.path();
 
         if path.extension().and_then(|e| e.to_str()) == Some("zip") {
-            let mod_info: UnrusterModInfo = get_modinfo_from_zip(&path)?;
+            let mod_info: UnrusterModInfo = get_modinfo_from_zip(&mods_folder_path)?;
             default_profile.mods.push(mod_info);
         }
     }
