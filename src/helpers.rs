@@ -15,7 +15,7 @@ pub fn create_default_profile<P: AsRef<std::path::Path>>(mods_folder_path: P) ->
         let path = entry.path();
 
         if path.extension().and_then(|e| e.to_str()) == Some("zip") {
-            let mod_info: UnrusterModInfo = get_modinfo_from_zip(&mods_folder_path)?;
+            let mod_info: UnrusterModInfo = get_modinfo_from_zip(&path)?;
             default_profile.mods.push(mod_info);
         }
     }
