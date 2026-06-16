@@ -8,7 +8,7 @@ use std::{io::Read};
 
 pub fn create_default_profile<P: AsRef<std::path::Path>>(path: P) -> UResult<UnrusterProfile> {
     println!("Current profile directory is empty, current profile shall be of your current mods.");
-    let mut default_profile = UnrusterProfile {profile_name: "Default".to_string(), game_version: get_game_version()?, mods: vec![]};
+    let mut default_profile = UnrusterProfile {profile_name: DEFAULT_PROFILE_NAME.to_string(), game_version: get_game_version()?, mods: vec![]};
 
     for file in std::fs::read_dir(path.as_ref())? {
         let entry= file?;
@@ -19,8 +19,8 @@ pub fn create_default_profile<P: AsRef<std::path::Path>>(path: P) -> UResult<Unr
             default_profile.mods.push(mod_info);
         }
     }
-    let profile_path = std::path::Path::new(CURRENT_PROFILE_PATH).join("default_profile.json");
-    write_json(&default_profile, &profile_path)?;
+    //let profile_path = std::path::Path::new(PROFILES_PATH).join(format!("{}.json", &default_profile.profile_name));
+    //write_json(&default_profile, &profile_path)?;
 
     Ok(default_profile)
 }
@@ -36,9 +36,9 @@ pub fn create_default_settings() -> UResult<UnrusterConfig> {
         None => get_mod_directory()?.to_str().ok_or("Couldn't convert path into slice.")?.to_string()
     };
 
-    let config = UnrusterConfig { mod_folder_path: mods_path.to_string()};
-    let config_path = std::path::Path::new(CONFIG_FILE_PATH).join("default_config.json");
-    write_json(&config, &config_path)?;
+    let config = UnrusterConfig { mod_folder_path: mods_path.to_string(), active_profile_name: DEFAULT_PROFILE_NAME.to_string()};
+    //let config_path = std::path::Path::new(CONFIG_FILE_PATH).join("default_config.json");
+    //write_json(&config, &config_path)?;
 
     Ok(config)
 }
@@ -65,7 +65,7 @@ pub fn get_game_version() -> UResult<String> {
         .and_then(|v| v.strip_prefix('v'))
         .ok_or("Couldn't parse version from logs.")?;
 
-    println!("Game version: {:?}", version);
+    //println!("Game version: {:?}", version);
 
     Ok(version.to_string())
 }
@@ -111,7 +111,7 @@ pub fn check_directory_contents<P: AsRef<std::path::Path>>(path: P, check_for: &
     match (files_in_dir.next(), files_in_dir.next()) {
         (None, _) => Ok(DirectoryState::Empty),
         (Some(first), None) => Ok(DirectoryState::Single(first)),
-        (Some(_), Some(_)) => Ok(DirectoryState::Multiple),
+        (Some(_), Some(_)) => Ok(DirectoryState::Multiple(std::fs::read_dir(directory)?)),
     }
 }
 
@@ -132,6 +132,15 @@ pub fn empty_directory<P: AsRef<std::path::Path>>(path: P) -> UResult<()> {
     std::fs::create_dir_all(path.as_ref())?;
 
     Ok(())
+}
+
+pub fn find_profile_by_name(name: &str) -> UResult<UnrusterProfile> {
+    let path = std::path::Path::new(PROFILES_PATH).join(format!("{}.json", name));
+    if !path.exists() {
+        return Err(format!("Profile {} not found", name).into());
+    }
+    let content = std::fs::read_to_string(path)?;
+    Ok(serde_json::from_str(&content)?)
 }
 
 pub fn write_json<S: Serialize, P: AsRef<std::path::Path>>(target: &S, path: P) -> UResult<()> {

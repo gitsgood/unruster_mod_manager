@@ -11,11 +11,7 @@ fn main() -> UResult<()> {
 
     let _state = UnrusterState::new()?;
 
-    let updatable = _state.compare_all_mod_versions()?;
-
-    for modid in updatable {
-        modid.0.print_update_situation(&modid.1);
-    }
+    _state.run_update_check()?;
 
     //_state.sync_mods_to_profile()?;
 

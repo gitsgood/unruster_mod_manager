@@ -1,8 +1,8 @@
 pub const VINTAGE_STORY_API_PREFIX: &str = "https://mods.vintagestory.at/api/mod/";
 
-pub const CURRENT_PROFILE_PATH: &str = "./Unruster/Profiles/Current";
+pub const DEFAULT_PROFILE_NAME: &str = "default_profile";
 
-pub const UNUSED_PROFILES_PATH: &str = "./Unruster/Profiles/Unused";
+pub const PROFILES_PATH: &str = "./Unruster/Profiles";
 
 pub const DOWNLOAD_TARGET_TEST: &str = "./Downloads";
 

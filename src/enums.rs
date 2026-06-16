@@ -4,7 +4,7 @@ use colored::Colorize;
 pub enum DirectoryState {
     Empty,
     Single(std::fs::DirEntry),
-    Multiple,
+    Multiple(std::fs::ReadDir),
 }
 
 #[derive(PartialEq, Eq, Hash)]

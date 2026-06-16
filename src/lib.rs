@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fs::File, path::PathBuf, str::FromStr};
+use std::{cmp::Ordering, fs::File, str::FromStr};
 use semver::Version;
 use rayon::prelude::*;
 
@@ -28,7 +28,7 @@ impl UnrusterState {
             .user_agent("UnrusterModManager/0.1.0")
             .build()?;
 
-        let config: UnrusterConfig = match check_directory_contents(CONFIG_FILE_PATH, "json")? {
+        let mut config: UnrusterConfig = match check_directory_contents(CONFIG_FILE_PATH, "json")? {
             DirectoryState::Empty => {
                 create_default_settings()?
             }
@@ -37,18 +37,17 @@ impl UnrusterState {
                 let config_string = std::fs::read_to_string(path)?;
                 let current_config: UnrusterConfig = serde_json::from_str(&config_string)?;
 
-                println!("Current config has the following path: {}", &current_config.mod_folder_path);
+                println!("Config has the following mod path: {}", &current_config.mod_folder_path);
                 current_config
             }
-            DirectoryState::Multiple => {
-                return Err(format!("Current config directory contains more than 1 files, expected exactly 1").into());
+            DirectoryState::Multiple(_) => {
+                return Err(format!("Current config directory contains more than 1 json files, expected exactly 1").into());
             }
         };
 
-        let mods_path = PathBuf::from(&config.mod_folder_path);
-        let profile: UnrusterProfile = match check_directory_contents(CURRENT_PROFILE_PATH, "json")? {
+        let profile: UnrusterProfile = match check_directory_contents(PROFILES_PATH, "json")? {
             DirectoryState::Empty => {
-                create_default_profile(&mods_path)?
+                create_default_profile(&config.mod_folder_path)?
             }
             DirectoryState::Single(file) => {
                 let path = file.path();
@@ -59,14 +58,30 @@ impl UnrusterState {
                 for mods in &current_profile.mods {
                     println!("{}", mods.modid);
                 }
+                config.active_profile_name = current_profile.profile_name.clone();
+
                 current_profile
             }
-            DirectoryState::Multiple => {
-                return Err(format!("Current profile directory contains more than 1 files, expected exactly 1").into());
+            DirectoryState::Multiple(_) => {
+                let profile = match find_profile_by_name(&config.active_profile_name) {
+                    Ok(found_profile) => found_profile,
+                    Err(_) => {
+                        println!("Couldn't find profile named {}, reverting to default.", &config.active_profile_name);
+                        config.active_profile_name = DEFAULT_PROFILE_NAME.to_string();
+                        create_default_profile(&config.mod_folder_path)?
+                    } 
+                };
+                profile
             }
         };
 
         let version = Version::parse(&get_game_version()?)?;
+
+        let config_path = std::path::Path::new(CONFIG_FILE_PATH).join("config.json");
+        write_json(&config, config_path)?;
+
+        let profile_path = std::path::Path::new(PROFILES_PATH).join(format!("{}.json", &profile.profile_name));
+        write_json(&profile, profile_path)?;
 
         Ok(UnrusterState { 
             api_client: client, 
@@ -108,6 +123,59 @@ impl UnrusterState {
         Ok(())
     }
 
+    pub fn switch_current_profile(&mut self, profile_name: &str) -> UResult<()> {
+        let new_profile = find_profile_by_name(profile_name)?;
+
+        self.current_config.active_profile_name = profile_name.to_string();
+
+        let config_path = std::path::Path::new(CONFIG_FILE_PATH).join("config.json");
+        write_json(&self.current_config, config_path)?;
+
+        self.current_profile = new_profile;
+
+        println!("Switched to profile: {}", profile_name);
+        Ok(())
+    }
+
+    pub fn make_new_profile(&mut self) -> UResult<()> {
+        
+
+        Ok(())
+    }
+
+    pub fn run_update_check(&self) -> UResult<()> {
+        let results = self.compare_all_mod_versions()?;
+        
+        println!("\n--- Mod Update Report ---\n");
+        for (state, modid) in &results {
+            state.print_update_situation(modid);
+        }
+        
+        let update_count = results.iter().filter(|(s, _)| s.should_it_update()).count();
+        println!("--------------------------");
+        println!("Total updates available: {}", update_count);
+        
+        Ok(())
+    }
+
+    pub fn sync_mods_to_profile(&self) -> UResult<()> {
+        if self.verify_profile_to_mods_sync()? {
+            println!("Mods are already fully in sync with profile!");
+            return Ok(());
+        }
+
+        if !matches!(check_directory_contents(DOWNLOAD_TARGET_TEST, "zip")?, DirectoryState::Empty) {
+            println!("Completely deleting everything inside the mods folder");
+            empty_directory(DOWNLOAD_TARGET_TEST)?;
+        }
+
+        for modid in &self.current_profile.mods {
+            self.download_mod(&modid.modid, Some(semver::Version::from_str(&modid.version)?))?
+        }
+
+        Ok(())
+    }
+
     fn check_latest(&self, modid: &str) -> UResult<Version> {
         let api_url = format!("{}{}", VINTAGE_STORY_API_PREFIX, modid);
 
@@ -131,7 +199,7 @@ impl UnrusterState {
         Ok(latest_version)
     }
 
-    pub fn compare_all_mod_versions(&self) -> UResult<std::collections::HashSet<(ModUpdateState, String)>> {
+    fn compare_all_mod_versions(&self) -> UResult<std::collections::HashSet<(ModUpdateState, String)>> {
         let path = std::path::Path::new(&self.current_config.mod_folder_path);
         let directory: Vec<_> = std::fs::read_dir(path)?            
             .filter_map(Result::ok)
@@ -150,7 +218,7 @@ impl UnrusterState {
         Ok(updatables)
     }
 
-    pub fn compare_mod_version(&self, file: CompareInput) -> UResult<ModUpdateState> {
+    fn compare_mod_version(&self, file: CompareInput) -> UResult<ModUpdateState> {
         let mod_info: UnrusterModInfo = match file {
             CompareInput::Path(path) => get_modinfo_from_zip(path)?,
             CompareInput::ModInfo(this) => this
@@ -171,24 +239,6 @@ impl UnrusterState {
                 return Ok(ModUpdateState::OutOfDate)
             }
         }
-    }
-
-    pub fn sync_mods_to_profile(&self) -> UResult<()> {
-        if self.verify_profile_to_mods_sync()? {
-            println!("Mods are already fully in sync with profile!");
-            return Ok(());
-        }
-
-        if !matches!(check_directory_contents(DOWNLOAD_TARGET_TEST, "zip")?, DirectoryState::Empty) {
-            println!("Completely deleting everything inside the mods folder");
-            empty_directory(DOWNLOAD_TARGET_TEST)?;
-        }
-
-        for modid in &self.current_profile.mods {
-            self.download_mod(&modid.modid, Some(semver::Version::from_str(&modid.version)?))?
-        }
-
-        Ok(())
     }
 
     fn verify_profile_to_mods_sync(&self) -> UResult<bool> {

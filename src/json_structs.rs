@@ -45,4 +45,5 @@ pub struct UnrusterProfile {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct UnrusterConfig {
     pub mod_folder_path: String,
+    pub active_profile_name: String
 }
