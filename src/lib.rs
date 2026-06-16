@@ -17,7 +17,7 @@ pub type UResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 #[allow(unused)]
 pub struct UnrusterState {
     api_client: reqwest::blocking::Client,
-    pub current_profile: UnrusterProfile,
+    current_profile: UnrusterProfile,
     current_config: UnrusterConfig,
     current_game_version: Version
 }
@@ -137,8 +137,13 @@ impl UnrusterState {
         Ok(())
     }
 
-    pub fn make_new_profile(&mut self) -> UResult<()> {
-        
+    pub fn make_new_profile(&mut self, new_name: &str) -> UResult<()> {
+        let new_profile = UnrusterProfile {profile_name: new_name.to_string(), game_version: get_game_version()?, mods: vec![]};
+
+        self.current_profile = new_profile;
+
+        let profile_path = std::path::Path::new(PROFILES_PATH).join(format!("{}.json", &self.current_profile.profile_name));
+        write_json(&self.current_profile, profile_path)?;
 
         Ok(())
     }
@@ -155,6 +160,31 @@ impl UnrusterState {
         println!("--------------------------");
         println!("Total updates available: {}", update_count);
         
+        Ok(())
+    }
+
+    pub fn sync_profile_to_mods(&mut self) -> UResult<()> {
+        let mods_folder: Vec<std::fs::DirEntry> = std::fs::read_dir(&self.current_config.mod_folder_path)?
+            .filter_map(Result::ok)
+            .filter(|e| {
+            e.path()
+                .extension()
+                .and_then(|e| e.to_str()) == Some("zip")
+            })
+            .collect();
+        
+        self.current_profile.mods.clear();
+        self.current_profile.mods.reserve_exact(mods_folder.len());
+
+        for file in mods_folder {
+            let mod_info: UnrusterModInfo = get_modinfo_from_zip(&file.path())?;
+            self.current_profile.mods.push(mod_info);
+
+        }
+
+        let profile_path = std::path::Path::new(PROFILES_PATH).join(format!("{}.json", &self.current_profile.profile_name));
+        write_json(&self.current_profile, profile_path)?;
+
         Ok(())
     }
 
