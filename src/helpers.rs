@@ -143,6 +143,21 @@ pub fn find_profile_by_name(name: &str) -> UResult<UnrusterProfile> {
     Ok(serde_json::from_str(&content)?)
 }
 
+pub fn find_cached_mod(modid: &str) -> UResult<std::path::PathBuf> {
+    let entries = std::fs::read_dir(CACHED_MODS_PATH)?
+        .filter_map(Result::ok)
+        .filter(|e| {
+            e.path().extension().and_then(|e| e.to_str()) == Some("zip")
+        });
+    for entry in entries {
+        let modinfo = get_modinfo_from_zip(entry.path())?;
+        if modinfo.modid == modid {
+            return Ok(entry.path())
+        }
+    }
+    Err("Couldn't find the cached mod...".into())
+}
+
 pub fn write_json<S: Serialize, P: AsRef<std::path::Path>>(target: &S, path: P) -> UResult<()> {
     let file = std::fs::File::create(path.as_ref())?;
     serde_json::to_writer_pretty(file, target)?;

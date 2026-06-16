@@ -8,6 +8,8 @@ pub const DOWNLOAD_TARGET_TEST: &str = "./Downloads";
 
 pub const CONFIG_FILE_PATH: &str = "./Unruster/Config";
 
+pub const CACHED_MODS_PATH: &str = "./Unruster/Cache";
+
 pub const VINTAGE_STORY_MODS_PATH: &str = "VintagestoryData/Mods";
 
 pub const VINTAGE_STORY_LOGS_PATH: &str = "VintagestoryData/Logs";

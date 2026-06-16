@@ -31,6 +31,8 @@ pub struct UnrusterModInfo {
     pub modid: String,
     #[serde(alias = "Version")]
     pub version: String,
+    #[serde(default)]
+    pub is_locked: bool,
 }
 
 /// Represent, lo and behold, a mod profile

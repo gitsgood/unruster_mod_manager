@@ -11,14 +11,16 @@ pub enum DirectoryState {
 pub enum ModUpdateState {
     UpToDate,
     OutOfDate,
-    NewerThanNew
+    NewerThanNew,
+    Locked
 }
 impl ModUpdateState {
     pub fn should_it_update(&self) -> bool {
         match self {
             ModUpdateState::UpToDate => false,
             ModUpdateState::OutOfDate => true,
-            ModUpdateState::NewerThanNew => false
+            ModUpdateState::NewerThanNew => false,
+            ModUpdateState::Locked => false,
         }
     }
 
@@ -32,6 +34,9 @@ impl ModUpdateState {
             },
             ModUpdateState::NewerThanNew => {
                 println!("{}{}{}", "Current ".red().on_yellow(), modid.red().on_yellow(), " version is newer than the newest available ,':/".red().on_yellow());
+            },
+            ModUpdateState::Locked => {
+                println!("{}{}", modid.purple().on_yellow(), " is marked as locked!".purple().on_yellow());
             }
         }
     }

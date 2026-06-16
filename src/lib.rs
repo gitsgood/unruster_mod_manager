@@ -1,4 +1,4 @@
-use std::{cmp::Ordering, fs::File, str::FromStr};
+use std::{cmp::Ordering, fs::File, str::FromStr, io::Write};
 use semver::Version;
 use rayon::prelude::*;
 
@@ -114,7 +114,7 @@ impl UnrusterState {
             .ok_or(format!("Mod '{}' does not contain version {:?}", modid, version_to_download))?;
 
         let mut download_stream = self.api_client.get(&release.mainfile).send()?.error_for_status()?;
-        let download_path = std::path::Path::new(DOWNLOAD_TARGET_TEST).join(&release.filename);
+        let download_path = std::path::Path::new(&self.current_config.mod_folder_path).join(&release.filename);
         let mut downloaded_mod_file = File::create(&download_path)?;
 
         std::io::copy(&mut download_stream, &mut downloaded_mod_file)?;
@@ -134,7 +134,7 @@ impl UnrusterState {
 
         println!("Switched to profile: {}", profile_name);
         if self.current_game_version != Version::parse(&self.current_profile.game_version)? {
-            println!("Profile expected game version: {}\nBut current game version is: {}", &self.current_profile.game_version, &self.current_game_version)
+            println!("WARNING!\nProfile expected game version: {}\nBut current game version is: {}", &self.current_profile.game_version, &self.current_game_version)
         }
         Ok(())
     }
@@ -150,7 +150,7 @@ impl UnrusterState {
         Ok(())
     }
 
-    pub fn run_update_check(&self) -> UResult<()> {
+    pub fn run_update_check(&self) -> UResult<std::collections::HashSet<(ModUpdateState, String)>> {
         let results = self.compare_all_mod_versions()?;
         
         println!("\n--- Mod Update Report ---\n");
@@ -162,7 +162,7 @@ impl UnrusterState {
         println!("--------------------------");
         println!("Total updates available: {}", update_count);
         
-        Ok(())
+        Ok(results)
     }
 
     pub fn sync_profile_to_mods(&mut self) -> UResult<()> {
@@ -196,16 +196,129 @@ impl UnrusterState {
             return Ok(());
         }
 
-        if !matches!(check_directory_contents(DOWNLOAD_TARGET_TEST, "zip")?, DirectoryState::Empty) {
-            println!("Completely deleting everything inside the mods folder");
-            empty_directory(DOWNLOAD_TARGET_TEST)?;
+        match check_directory_contents(&self.current_config.mod_folder_path, "zip")? {
+            DirectoryState::Empty => {
+                println!("Mods folder already empty, doing nothing...");
+            }
+            DirectoryState::Single(file) => {
+                let mod_info = get_modinfo_from_zip(file.path())?;
+                if mod_info.is_locked {
+                    let new_path = std::path::Path::new(CACHED_MODS_PATH).join(file.file_name());
+                    std::fs::copy(file.path(), new_path)?;
+                }
+                else {
+                    empty_directory(&self.current_config.mod_folder_path)?;
+                }
+            }
+            DirectoryState::Multiple(folder) => {
+                let entries = folder.filter_map(Result::ok);
+                for entry in entries {
+                    let mod_info = get_modinfo_from_zip(entry.path())?;
+                    if mod_info.is_locked {
+                        let new_path = std::path::Path::new(CACHED_MODS_PATH).join(entry.file_name());
+                        std::fs::copy(entry.path(), new_path)?;
+                    }
+                    else {
+                        std::fs::remove_file(entry.path())?;
+                    }
+                }
+            }
         }
 
         for modid in &self.current_profile.mods {
-            self.download_mod(&modid.modid, Some(semver::Version::from_str(&modid.version)?))?
+            if !modid.is_locked {
+                self.download_mod(&modid.modid, Some(semver::Version::from_str(&modid.version)?))?
+            }
+            else {
+                let cached_mod = find_cached_mod(&modid.modid)?;
+                let new_path = std::path::Path::new(&self.current_config.mod_folder_path).join(cached_mod.file_name().unwrap());
+                std::fs::copy(cached_mod, new_path)?;
+            }
         }
 
         Ok(())
+    }
+
+    pub fn update_all_mods(&mut self, updatables: std::collections::HashSet<(ModUpdateState, String)>) -> UResult<()> {
+        for (update_state, modid) in &updatables {
+            if update_state.should_it_update() {
+                self.download_mod(modid, Some(self.check_latest(modid)?))?;
+            }
+        }
+        Ok(())
+    }
+
+    pub fn list_available_profiles(&self) -> UResult<Vec<String>> {
+        let profiles_folder = std::fs::read_dir(PROFILES_PATH)?
+            .filter_map(Result::ok)
+            .filter(|e| {
+                e.path()
+                    .extension()
+                    .and_then(|e| e.to_str()) == Some("json")
+            });
+        
+        let mut found_any = false;
+        let mut names_list = vec![];
+
+        for file in profiles_folder {
+            if let Some(stem) = file.path().file_stem() {
+                let profile_name = stem.to_string_lossy();
+
+                if profile_name == self.current_profile.profile_name {
+                    continue;
+                }
+
+                println!("- {}", profile_name);
+                names_list.push(profile_name.into_owned());
+                found_any = true;
+            }
+        }
+
+        if !found_any {
+            println!("No other profiles exist...\n");
+        }
+
+        Ok(names_list)
+    }
+
+    pub fn interactive_switch_profile(&mut self, profiles: Vec<String>) -> UResult<()> {
+        let available_profiles = profiles;
+
+        if available_profiles.is_empty() {
+            println!("No other profiles available to switch to.");
+            return Ok(());
+        }
+
+        loop {
+            println!("\n--- Select a Profile ---");
+            for (i, name) in available_profiles.iter().enumerate() {
+                println!("{}. {}", i + 1, name);
+            }
+            println!("q. Cancel");
+            print!("Enter number: ");
+            std::io::stdout().flush()?;
+
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input)?;
+            let input = input.trim();
+
+            if input == "q" {
+                println!("Switch cancelled.");
+                return Ok(());
+            }
+
+            match input.parse::<usize>() {
+                Ok(num) if num > 0 && num <= available_profiles.len() => {
+                    let selected_name = &available_profiles[num - 1];
+
+                    self.switch_current_profile(selected_name)?;
+                    return Ok(());
+                }
+                _ => {
+                    println!("Invalid selection. Please enter a number between 1 and {}.", available_profiles.len());
+                }
+            }
+        }
     }
 
     fn check_latest(&self, modid: &str) -> UResult<Version> {
@@ -257,6 +370,10 @@ impl UnrusterState {
         };
         //println!("Version of installed mod is: {}", mod_info.version);
 
+        if mod_info.is_locked {
+            return Ok(ModUpdateState::Locked)
+        }
+
         let current = Version::parse(&mod_info.version)?;
         let latest = &self.check_latest(&mod_info.modid)?;
 
@@ -274,11 +391,11 @@ impl UnrusterState {
     }
 
     fn verify_profile_to_mods_sync(&self) -> UResult<bool> {
-        if let DirectoryState::Empty = check_directory_contents(DOWNLOAD_TARGET_TEST, "zip")? {
+        if let DirectoryState::Empty = check_directory_contents(&self.current_config.mod_folder_path, "zip")? {
             return Ok(false);
         }
 
-        let entries: Vec<_> = std::fs::read_dir(DOWNLOAD_TARGET_TEST)?
+        let entries: Vec<_> = std::fs::read_dir(&self.current_config.mod_folder_path)?
             .filter_map(Result::ok)
             .filter(|e| e.path().extension().map_or(false, |ext| ext == "zip"))
             .collect();
