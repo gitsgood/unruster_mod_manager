@@ -16,7 +16,7 @@ pub type UResult<T> = Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 pub struct UnrusterState {
     api_client: reqwest::blocking::Client,
-    current_profile: UnrusterProfile,
+    pub current_profile: UnrusterProfile,
     current_config: UnrusterConfig,
     current_game_version: Version
 }
@@ -142,10 +142,10 @@ impl UnrusterState {
     pub fn make_new_profile(&mut self, new_name: &str) -> UResult<()> {
         let new_profile = UnrusterProfile {profile_name: new_name.to_string(), game_version: get_game_version()?, mods: vec![]};
 
-        self.current_profile = new_profile;
+        //self.current_profile = new_profile;
 
-        let profile_path = std::path::Path::new(PROFILES_PATH).join(format!("{}.json", &self.current_profile.profile_name));
-        write_json(&self.current_profile, profile_path)?;
+        let profile_path = std::path::Path::new(PROFILES_PATH).join(format!("{}.json", new_profile.profile_name));
+        write_json(&new_profile, profile_path)?;
 
         Ok(())
     }
@@ -249,7 +249,24 @@ impl UnrusterState {
     pub fn update_all_mods(&mut self, updatables: std::collections::HashSet<(ModUpdateState, String)>) -> UResult<()> {
         for (update_state, modid) in &updatables {
             if update_state.should_it_update() {
-                self.download_mod(modid, Some(self.check_latest(modid)?))?;
+                let mods_folder = std::fs::read_dir(&self.current_config.mod_folder_path)?
+                    .filter_map(Result::ok)
+                    .filter(|e| e.path().extension().map_or(false, |ext| ext == "zip"));
+
+                for entry in mods_folder {
+                    if let Ok(info) = get_modinfo_from_zip(entry.path()) {
+                        if &info.modid == modid {
+                            std::fs::remove_file(entry.path())?;
+                        }
+                    }
+                }
+
+                let latest_version = self.check_latest(modid)?;
+                self.download_mod(modid, Some(latest_version.clone()))?;
+
+                if let Some(m) = self.current_profile.mods.iter_mut().find(|m| &m.modid == modid) {
+                    m.version = latest_version.to_string();
+                }
             }
         }
         Ok(())

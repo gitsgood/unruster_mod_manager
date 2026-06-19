@@ -4,6 +4,7 @@ fn main() -> UResult<()> {
     let mut state = UnrusterState::new()?;
 
     println!("Welcome to the Unruster Mod Manager for Vintage Story!");
+    println!("Current profile is {}", state.current_profile.profile_name);
 
     loop {
         println!("The manager currently offers the following functionality:");
