@@ -1,0 +1,672 @@
+{
+  "profile_name": "default_profile",
+  "game_version": "1.22.3",
+  "mods": [
+    {
+      "name": "1499 degrees",
+      "modid": "degrees1499",
+      "version": "1.0.0",
+      "is_locked": false
+    },
+    {
+      "name": "A Culinary Artillery Experimental",
+      "modid": "aculinaryartillery",
+      "version": "2.0.0-dev.21",
+      "is_locked": false
+    },
+    {
+      "name": "Alchemy",
+      "modid": "alchemy",
+      "version": "2.1.0-rc.90",
+      "is_locked": false
+    },
+    {
+      "name": "Algernons Terrain Sampler",
+      "modid": "algernonsterrainsampler",
+      "version": "1.3.0",
+      "is_locked": false
+    },
+    {
+      "name": "Animal cages",
+      "modid": "animalcages",
+      "version": "5.0.0",
+      "is_locked": false
+    },
+    {
+      "name": "Arrowheads Recovery (fork)",
+      "modid": "arrowheadsrecoveryfork",
+      "version": "1.2.0",
+      "is_locked": false
+    },
+    {
+      "name": "Attribute Rendering Library",
+      "modid": "attributerenderinglibrary",
+      "version": "3.1.5",
+      "is_locked": false
+    },
+    {
+      "name": "Auto Map Markers",
+      "modid": "egocaribautomapmarkers",
+      "version": "5.0.3",
+      "is_locked": false
+    },
+    {
+      "name": "BetterBloomeries : ReBorn",
+      "modid": "betterbloomeriesreborn",
+      "version": "1.0.5",
+      "is_locked": false
+    },
+    {
+      "name": "BetterEr Prospecting",
+      "modid": "bettererprospecting",
+      "version": "3.4.3",
+      "is_locked": false
+    },
+    {
+      "name": "Better forest",
+      "modid": "betterforest",
+      "version": "0.1.2",
+      "is_locked": false
+    },
+    {
+      "name": "BetterRuins",
+      "modid": "betterruins",
+      "version": "0.6.3",
+      "is_locked": false
+    },
+    {
+      "name": "Better Sticks",
+      "modid": "bettersticks",
+      "version": "1.2.1",
+      "is_locked": false
+    },
+    {
+      "name": "BetterTraders",
+      "modid": "bettertraders",
+      "version": "0.2.0",
+      "is_locked": false
+    },
+    {
+      "name": "Bird's Eye",
+      "modid": "birdseye",
+      "version": "0.1.4",
+      "is_locked": false
+    },
+    {
+      "name": "Block overlay",
+      "modid": "blocksoverlay",
+      "version": "4.11.5",
+      "is_locked": false
+    },
+    {
+      "name": "BloodTrail",
+      "modid": "bloodtrail",
+      "version": "1.2.4",
+      "is_locked": false
+    },
+    {
+      "name": "Boatspeedtest",
+      "modid": "boatiespeedie12",
+      "version": "1.0.4",
+      "is_locked": false
+    },
+    {
+      "name": "Butchering",
+      "modid": "butchering",
+      "version": "1.13.5",
+      "is_locked": false
+    },
+    {
+      "name": "Carry On",
+      "modid": "carryon",
+      "version": "2.0.0-pre.7",
+      "is_locked": false
+    },
+    {
+      "name": "CarryOnLib",
+      "modid": "carryonlib",
+      "version": "1.0.0-pre.7",
+      "is_locked": false
+    },
+    {
+      "name": "Castaway",
+      "modid": "castaway",
+      "version": "1.0.6",
+      "is_locked": false
+    },
+    {
+      "name": "Catch Livestock",
+      "modid": "catchlivestock",
+      "version": "0.2.4",
+      "is_locked": false
+    },
+    {
+      "name": "Catch Ledge",
+      "modid": "catchledge",
+      "version": "0.7.1",
+      "is_locked": false
+    },
+    {
+      "name": "ChargedJump",
+      "modid": "chargedjump",
+      "version": "1.2.3",
+      "is_locked": false
+    },
+    {
+      "name": "Chiseled Block Retention",
+      "modid": "cbr",
+      "version": "2.0.1",
+      "is_locked": false
+    },
+    {
+      "name": "chiseltools",
+      "modid": "chiseltools",
+      "version": "1.17.3",
+      "is_locked": false
+    },
+    {
+      "name": "Composter",
+      "modid": "composter",
+      "version": "1.2.2",
+      "is_locked": false
+    },
+    {
+      "name": "CompostTweak",
+      "modid": "rlldtco0001",
+      "version": "2.3.0",
+      "is_locked": false
+    },
+    {
+      "name": "Config lib",
+      "modid": "configlib",
+      "version": "1.12.0",
+      "is_locked": false
+    },
+    {
+      "name": "Cooperative Combat Rework Reupload",
+      "modid": "cooperativecombatrework",
+      "version": "1.1.0",
+      "is_locked": false
+    },
+    {
+      "name": "Crawl&Dive",
+      "modid": "crawlanddive",
+      "version": "0.2.5",
+      "is_locked": false
+    },
+    {
+      "name": "Dana Tweaks",
+      "modid": "danatweaks",
+      "version": "4.0.1",
+      "is_locked": true
+    },
+    {
+      "name": "Dodge Master",
+      "modid": "dodgemaster",
+      "version": "1.2.4",
+      "is_locked": false
+    },
+    {
+      "name": "Door Variants",
+      "modid": "doorvariants",
+      "version": "1.1.4",
+      "is_locked": false
+    },
+    {
+      "name": "Draconis",
+      "modid": "draconis",
+      "version": "1.4.4",
+      "is_locked": false
+    },
+    {
+      "name": "Drystone Parity",
+      "modid": "DrystoneParity",
+      "version": "1.0.0",
+      "is_locked": false
+    },
+    {
+      "name": "Electrical Progressive: Basics",
+      "modid": "electricalprogressivebasics",
+      "version": "3.3.1",
+      "is_locked": false
+    },
+    {
+      "name": "Electrical Progressive: Core",
+      "modid": "electricalprogressivecore",
+      "version": "3.3.0",
+      "is_locked": false
+    },
+    {
+      "name": "Electrical Progressive: Equipment",
+      "modid": "electricalprogressiveequipment",
+      "version": "3.2.3",
+      "is_locked": false
+    },
+    {
+      "name": "Electrical Progressive: QoL",
+      "modid": "electricalprogressiveqol",
+      "version": "3.3.0",
+      "is_locked": false
+    },
+    {
+      "name": "Elk Physics",
+      "modid": "elkphysics",
+      "version": "3.0.3",
+      "is_locked": false
+    },
+    {
+      "name": "Expanded Foods: Core",
+      "modid": "expandedfoods",
+      "version": "2.0.0-dev.12",
+      "is_locked": false
+    },
+    {
+      "name": "Expanded Foods: Chef's Tricks",
+      "modid": "efchefstricks",
+      "version": "1.0.0-dev.3",
+      "is_locked": false
+    },
+    {
+      "name": "Extra Info",
+      "modid": "extrainfo",
+      "version": "2.2.1",
+      "is_locked": false
+    },
+    {
+      "name": "Extra Overlays",
+      "modid": "extraoverlaysm4",
+      "version": "1.8.0",
+      "is_locked": false
+    },
+    {
+      "name": "Farseer",
+      "modid": "farseer",
+      "version": "1.4.0",
+      "is_locked": false
+    },
+    {
+      "name": "FastKnapping",
+      "modid": "fastknapping",
+      "version": "1.0.0",
+      "is_locked": false
+    },
+    {
+      "name": "Fast Map",
+      "modid": "fastmap",
+      "version": "122.5.1",
+      "is_locked": false
+    },
+    {
+      "name": "Forgotten Armory Chinese Dynasties",
+      "modid": "fadynasties",
+      "version": "1.2.9",
+      "is_locked": false
+    },
+    {
+      "name": "Forgotten Armory Gothic",
+      "modid": "fagothic",
+      "version": "1.3.4",
+      "is_locked": false
+    },
+    {
+      "name": "Forgotten Armory Greenwich",
+      "modid": "fagreenwich",
+      "version": "1.4.5",
+      "is_locked": false
+    },
+    {
+      "name": "Forgotten Armory Hussar",
+      "modid": "fahussar",
+      "version": "1.1.6",
+      "is_locked": false
+    },
+    {
+      "name": "Forgotten Armory Landsknecht",
+      "modid": "falandsknecht",
+      "version": "1.2.5",
+      "is_locked": false
+    },
+    {
+      "name": "Forgotten Armory Templar",
+      "modid": "fatemplar",
+      "version": "1.4.6",
+      "is_locked": false
+    },
+    {
+      "name": "Forgotten Armory Viking",
+      "modid": "faviking",
+      "version": "1.1.6",
+      "is_locked": false
+    },
+    {
+      "name": "Gardner's Delight",
+      "modid": "gardenersdelight",
+      "version": "1.0.2",
+      "is_locked": false
+    },
+    {
+      "name": "Jaunt: Extended Riding System",
+      "modid": "jaunt",
+      "version": "3.0.0-rc.3",
+      "is_locked": false
+    },
+    {
+      "name": "JSON Patches lib",
+      "modid": "jsonpatcheslib",
+      "version": "1.5.3",
+      "is_locked": false
+    },
+    {
+      "name": "Knapster",
+      "modid": "knapster",
+      "version": "4.0.0",
+      "is_locked": false
+    },
+    {
+      "name": "Manual Quenching",
+      "modid": "manualquenching",
+      "version": "1.0.10",
+      "is_locked": false
+    },
+    {
+      "name": "MedievalArchitecture",
+      "modid": "medievalarchitecture",
+      "version": "1.1.1",
+      "is_locked": false
+    },
+    {
+      "name": "Millwright",
+      "modid": "millwright",
+      "version": "1.3.3",
+      "is_locked": false
+    },
+    {
+      "name": "Monster Nugget Drops",
+      "modid": "monsternuggetdrops",
+      "version": "1.4.1",
+      "is_locked": false
+    },
+    {
+      "name": "More Stone Drops",
+      "modid": "MoreStoneDrops",
+      "version": "1.0.0",
+      "is_locked": false
+    },
+    {
+      "name": "Cartographer",
+      "modid": "nbcartographer",
+      "version": "2.3.0",
+      "is_locked": false
+    },
+    {
+      "name": "NDL TreeGrowth",
+      "modid": "ndltreegrowth",
+      "version": "2.5.0",
+      "is_locked": false
+    },
+    {
+      "name": "Notice Board",
+      "modid": "noticeboard",
+      "version": "2.0.2",
+      "is_locked": false
+    },
+    {
+      "name": "Overhaul lib",
+      "modid": "overhaullib",
+      "version": "2.0.10",
+      "is_locked": false
+    },
+    {
+      "name": "Player Corpse",
+      "modid": "playercorpseforkedazu",
+      "version": "1.14.0",
+      "is_locked": false
+    },
+    {
+      "name": "Player Model Library",
+      "modid": "playermodellib",
+      "version": "1.23.2",
+      "is_locked": false
+    },
+    {
+      "name": "Primitive Survival",
+      "modid": "primitivesurvival",
+      "version": "5.0.6",
+      "is_locked": false
+    },
+    {
+      "name": "ProjectileTracker",
+      "modid": "projectiletracker",
+      "version": "1.0.7",
+      "is_locked": false
+    },
+    {
+      "name": "ProspectTogether",
+      "modid": "prospecttogether",
+      "version": "2.2.1",
+      "is_locked": false
+    },
+    {
+      "name": "Quicklime in Kiln",
+      "modid": "quicklimepk",
+      "version": "1.1.1",
+      "is_locked": true
+    },
+    {
+      "name": "Rustbound Magic",
+      "modid": "rustboundmagic",
+      "version": "3.2.3",
+      "is_locked": false
+    },
+    {
+      "name": "Salt and sands",
+      "modid": "saltandsands",
+      "version": "1.3.0",
+      "is_locked": false
+    },
+    {
+      "name": "Scaffolding",
+      "modid": "scaffolding",
+      "version": "1.3.1",
+      "is_locked": false
+    },
+    {
+      "name": "Shelf Obsessed",
+      "modid": "shelfobsessed",
+      "version": "2.1.5",
+      "is_locked": false
+    },
+    {
+      "name": "Shipwright: Vessels of Distant Shores",
+      "modid": "shipwright",
+      "version": "1.4.1",
+      "is_locked": false
+    },
+    {
+      "name": "SmithingPlus",
+      "modid": "smithingplus",
+      "version": "1.9.0-rc.1",
+      "is_locked": false
+    },
+    {
+      "name": "Snow Caps",
+      "modid": "snowcaps",
+      "version": "0.0.1",
+      "is_locked": false
+    },
+    {
+      "name": "Sortable Storage",
+      "modid": "sortablestorage",
+      "version": "3.0.0",
+      "is_locked": false
+    },
+    {
+      "name": "Spawn Highlight - Custom",
+      "modid": "spawnhighlightcustom",
+      "version": "1.1.3",
+      "is_locked": false
+    },
+    {
+      "name": "Immersive Fibercraft",
+      "modid": "spinningwheel",
+      "version": "1.2.12",
+      "is_locked": false
+    },
+    {
+      "name": "Spyglass",
+      "modid": "spyglass",
+      "version": "0.6.1",
+      "is_locked": false
+    },
+    {
+      "name": "StickEmUp!",
+      "modid": "stickemup",
+      "version": "1.3.1",
+      "is_locked": false
+    },
+    {
+      "name": "Stone Bake Oven",
+      "modid": "stonebakeoven",
+      "version": "1.3.5",
+      "is_locked": false
+    },
+    {
+      "name": "Stone Quarry",
+      "modid": "stonequarryrepckfipil",
+      "version": "3.6.3",
+      "is_locked": false
+    },
+    {
+      "name": "Tabletop Games",
+      "modid": "tabletopgames",
+      "version": "4.0.0-pre.2",
+      "is_locked": false
+    },
+    {
+      "name": "Temporal Symphony",
+      "modid": "temporalsymphony",
+      "version": "2.3.2",
+      "is_locked": false
+    },
+    {
+      "name": "Terra Prety",
+      "modid": "terraprety",
+      "version": "7.10.2",
+      "is_locked": false
+    },
+    {
+      "name": "Th3Dungeon",
+      "modid": "th3dungeon",
+      "version": "1.0.1",
+      "is_locked": false
+    },
+    {
+      "name": "Toolsmith",
+      "modid": "toolsmith",
+      "version": "1.2.17",
+      "is_locked": false
+    },
+    {
+      "name": "Translocator Engineering Redux",
+      "modid": "translocatorengineeringredux",
+      "version": "1.6.6",
+      "is_locked": false
+    },
+    {
+      "name": "Tree Tapping",
+      "modid": "treetapredux",
+      "version": "1.2.7",
+      "is_locked": false
+    },
+    {
+      "name": "Undamageable T3_PersonalTweaks",
+      "modid": "undamageablet3",
+      "version": "1.0.0",
+      "is_locked": true
+    },
+    {
+      "name": "Upgradeable Refractorybricks",
+      "modid": "upgraderefractorybriks",
+      "version": "1.0.1",
+      "is_locked": false
+    },
+    {
+      "name": "Useful Shears-PersonalTweaks(CYPRESS)",
+      "modid": "usefulshears",
+      "version": "1.0.0",
+      "is_locked": true
+    },
+    {
+      "name": "Useful Traders",
+      "modid": "usefultraders",
+      "version": "2.5.2",
+      "is_locked": false
+    },
+    {
+      "name": "Vanity",
+      "modid": "vanity",
+      "version": "2.5.1-rc.1",
+      "is_locked": false
+    },
+    {
+      "name": "Vault And Roll",
+      "modid": "vaultandroll",
+      "version": "0.1.2",
+      "is_locked": false
+    },
+    {
+      "name": "Vermicomposting",
+      "modid": "vermicomposting",
+      "version": "1.0.6",
+      "is_locked": false
+    },
+    {
+      "name": "Dear ImGui",
+      "modid": "vsimgui",
+      "version": "1.2.7",
+      "is_locked": false
+    },
+    {
+      "name": "VS Roofing Mod",
+      "modid": "vsroofing",
+      "version": "1.6.3",
+      "is_locked": false
+    },
+    {
+      "name": "Algernons Watersheds",
+      "modid": "watersheds",
+      "version": "6.4.3",
+      "is_locked": false
+    },
+    {
+      "name": "Wind Chimes",
+      "modid": "windchimes",
+      "version": "1.5.2",
+      "is_locked": false
+    },
+    {
+      "name": "woodenfortifications",
+      "modid": "woodenfortifications",
+      "version": "2.0.11",
+      "is_locked": false
+    },
+    {
+      "name": "XLib Fork",
+      "modid": "xlibfork",
+      "version": "1.0.21",
+      "is_locked": false
+    },
+    {
+      "name": "xSkills Fork",
+      "modid": "xskillsfork",
+      "version": "1.0.74",
+      "is_locked": false
+    },
+    {
+      "name": "xSkills Gilded",
+      "modid": "xskillsgilded",
+      "version": "1.3.38",
+      "is_locked": false
+    }
+  ]
+}
