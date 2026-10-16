@@ -1,4 +1,4 @@
-use crate::{json_structs::*, constants_for_posterity::*, UResult, enums::{DirectoryState}};
+use crate::*;
 
 use serde::{Serialize};
 use std::path::PathBuf;
@@ -7,7 +7,7 @@ use zip::ZipArchive;
 use std::{io::Read};
 
 pub fn create_default_profile<P: AsRef<std::path::Path>>(mods_folder_path: P) -> UResult<UnrusterProfile> {
-    println!("Current profile directory is empty, current profile shall be of your current mods.");
+    info!("Current profile directory is empty, current profile shall be of your current mods.");
     let mut default_profile = UnrusterProfile {profile_name: DEFAULT_PROFILE_NAME.to_string(), game_version: get_game_version()?, mods: vec![]};
 
     for file in std::fs::read_dir(mods_folder_path.as_ref())? {
@@ -36,7 +36,7 @@ pub fn create_default_profile<P: AsRef<std::path::Path>>(mods_folder_path: P) ->
 }
 
 pub fn create_default_settings() -> UResult<UnrusterConfig> {
-    println!("Config directory is empty, setting up configuration...");
+    info!("Config directory is empty, setting up configuration...");
     let mods_path = match dirs::data_dir() {
         Some(data_dir) => data_dir
             .join(VINTAGE_STORY_MODS_PATH)
@@ -75,7 +75,7 @@ pub fn get_game_version() -> UResult<String> {
         .and_then(|v| v.strip_prefix('v'))
         .ok_or("Couldn't parse version from logs.")?;
 
-    //println!("Game version: {:?}", version);
+    //info!("Game version: {:?}", version);
 
     Ok(version.to_string())
 }
@@ -106,7 +106,7 @@ pub fn check_directory_contents<P: AsRef<std::path::Path>>(path: P, check_for: &
     let directory = path.as_ref();
 
     if !directory.exists() {
-        println!("{:?} does not exist, creating it.", directory);
+        info!("{:?} does not exist, creating it.", directory);
         std::fs::create_dir_all(directory)?;
     }
 
@@ -176,4 +176,17 @@ pub fn write_json<S: Serialize, P: AsRef<std::path::Path>>(target: &S, path: P) 
     let file = std::fs::File::create(path.as_ref())?;
     serde_json::to_writer_pretty(file, target)?;
     Ok(())
+}
+
+pub fn user_querry(querry_msg: &str) -> Result<u8, Box<dyn std::error::Error>> {
+    info!("{}", querry_msg);
+
+    let mut users_input = String::new();
+    std::io::stdin().read_line(&mut users_input)?;
+
+    let users_will: u8 = match users_input.trim().parse() {
+        Ok(num) => num,
+        Err(_) => u8::MAX
+    };
+    Ok(users_will)
 }

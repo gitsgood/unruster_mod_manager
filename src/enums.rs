@@ -1,4 +1,4 @@
-use crate::{UnrusterModInfo};
+use crate::*;
 use colored::Colorize;
 
 pub enum DirectoryState {
@@ -27,16 +27,16 @@ impl ModUpdateState {
     pub fn print_update_situation(&self, modid: &str) {
         match self {
             ModUpdateState::UpToDate => {
-                println!("{} is up to date :)", modid);
+                info!("{} is up to date :)", modid);
             },
             ModUpdateState::OutOfDate => {
-                println!("{}{}", modid.green().on_bright_white(), " has an update available!".green().on_bright_white());
+                info!("{}{}", modid.green().on_bright_white(), " has an update available!".green().on_bright_white());
             },
             ModUpdateState::NewerThanNew => {
-                println!("{}{}{}", "Current ".red().on_yellow(), modid.red().on_yellow(), " version is newer than the newest available ,':/".red().on_yellow());
+                info!("{}{}{}", "Current ".red().on_yellow(), modid.red().on_yellow(), " version is newer than the newest available ,':/".red().on_yellow());
             },
             ModUpdateState::Locked => {
-                println!("{}{}", modid.purple().on_yellow(), " is marked as locked!".purple().on_yellow());
+                info!("{}{}", modid.purple().on_yellow(), " is marked as locked!".purple().on_yellow());
             }
         }
     }
