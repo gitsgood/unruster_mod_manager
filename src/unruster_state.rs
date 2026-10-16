@@ -39,9 +39,9 @@ impl UnrusterState {
                 let profile_string = std::fs::read_to_string(path)?;
                 let current_profile: UnrusterProfile = serde_json::from_str(&profile_string)?;
 
-                println!("Current profile has the following mods:\n");
+                info!("Current profile has the following mods:\n");
                 for mods in &current_profile.mods {
-                    println!("{}", mods.modid);
+                    info!("{}", mods.modid);
                 }
                 config.active_profile_name = current_profile.profile_name.clone();
 
@@ -51,7 +51,7 @@ impl UnrusterState {
                 let profile = match find_profile_by_name(&config.active_profile_name) {
                     Ok(found_profile) => found_profile,
                     Err(_) => {
-                        println!("Couldn't find profile named {}, reverting to default.", &config.active_profile_name);
+                        info!("Couldn't find profile named {}, reverting to default.", &config.active_profile_name);
                         config.active_profile_name = DEFAULT_PROFILE_NAME.to_string();
                         create_default_profile(&config.mod_folder_path)?
                     } 
@@ -118,9 +118,9 @@ impl UnrusterState {
 
         self.current_profile = new_profile;
 
-        println!("Switched to profile: {}", profile_name);
+        info!("Switched to profile: {}", profile_name);
         if self.current_game_version != Version::parse(&self.current_profile.game_version)? {
-            println!("WARNING!\nProfile expected game version: {}\nBut current game version is: {}", &self.current_profile.game_version, &self.current_game_version)
+            info!("WARNING!\nProfile expected game version: {}\nBut current game version is: {}", &self.current_profile.game_version, &self.current_game_version)
         }
         Ok(())
     }
@@ -139,14 +139,22 @@ impl UnrusterState {
     pub fn run_update_check(&self) -> UResult<std::collections::HashSet<(ModUpdateState, String)>> {
         let results = self.compare_all_mod_versions()?;
         
-        println!("\n--- Mod Update Report ---\n");
-        for (state, modid) in &results {
+        // 1. Convert the HashSet to a Vec so we can sort it
+        let mut sorted_results: Vec<&(ModUpdateState, String)> = results.iter().collect();
+        
+        // 2. Sort alphabetically by the modid (the second element in the tuple)
+        sorted_results.sort_by(|a, b| a.1.cmp(&b.1));
+        
+        info!("\n--- Mod Update Report ---\n");
+        
+        // 3. Iterate over the SORTED list
+        for (state, modid) in sorted_results {
             state.print_update_situation(modid);
         }
         
         let update_count = results.iter().filter(|(s, _)| s.should_it_update()).count();
-        println!("--------------------------");
-        println!("Total updates available: {}", update_count);
+        info!("--------------------------");
+        info!("Total updates available: {}", update_count);
         
         Ok(results)
     }
@@ -178,7 +186,7 @@ impl UnrusterState {
 
     pub fn sync_mods_to_profile(&self) -> UResult<()> {
         if self.verify_profile_to_mods_sync()? {
-            println!("Mods are already fully in sync with profile!");
+            info!("Mods are already fully in sync with profile!");
             return Ok(());
         }
 
@@ -205,7 +213,7 @@ impl UnrusterState {
 
                 if !cache_path.exists() {
                     std::fs::copy(&path, cache_path)?;
-                    println!("Backed up locked mod: {}", mod_info.modid);
+                    info!("Backed up locked mod: {}", mod_info.modid);
                 }
             } 
             else {
@@ -278,14 +286,14 @@ impl UnrusterState {
                     continue;
                 }
 
-                println!("- {}", profile_name);
+                info!("- {}", profile_name);
                 names_list.push(profile_name.into_owned());
                 found_any = true;
             }
         }
 
         if !found_any {
-            println!("No other profiles exist...\n");
+            info!("No other profiles exist...\n");
         }
 
         Ok(names_list)
@@ -295,16 +303,16 @@ impl UnrusterState {
         let available_profiles = profiles;
 
         if available_profiles.is_empty() {
-            println!("No other profiles available to switch to.");
+            info!("No other profiles available to switch to.");
             return Ok(());
         }
 
         loop {
-            //println!("\n--- Select a Profile ---");
+            //info!("\n--- Select a Profile ---");
             for (i, name) in available_profiles.iter().enumerate() {
-                println!("{}: {}", i + 1, name);
+                info!("{}: {}", i + 1, name);
             }
-            println!("Else: Cancel");
+            info!("Else: Cancel");
             print!("Enter number: ");
             std::io::stdout().flush()?;
 
@@ -313,7 +321,7 @@ impl UnrusterState {
             let input = input.trim();
 
             /*if input == "q" {
-                println!("Switch cancelled.");
+                info!("Switch cancelled.");
                 return Ok(());
             }*/
 
@@ -325,7 +333,7 @@ impl UnrusterState {
                     return Ok(());
                 }
                 _ => {
-                    println!("Switch cancelled.");
+                    info!("Switch cancelled.");
                     return Ok(());
                 }
             }
@@ -344,14 +352,14 @@ impl UnrusterState {
         let mut latest_version = Version::parse(&first.modversion)?;
 
         for release in releases {
-            //println!("{}", release.modversion);
+            //info!("{}", release.modversion);
             let this_version = Version::parse(&release.modversion)?;
 
             if this_version > latest_version {
                 latest_version = this_version;
             }
         }
-        //println!("{}", latest_version.to_string().yellow().on_red());
+        //info!("{}", latest_version.to_string().yellow().on_red());
         Ok(latest_version)
     }
 
@@ -379,7 +387,7 @@ impl UnrusterState {
             CompareInput::Path(path) => get_modinfo_from_zip(path)?,
             CompareInput::ModInfo(this) => this
         };
-        //println!("Version of installed mod is: {}", mod_info.version);
+        //info!("Version of installed mod is: {}", mod_info.version);
 
         if mod_info.is_locked {
             return Ok(ModUpdateState::Locked)
